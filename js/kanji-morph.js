@@ -1,48 +1,38 @@
-// Adapted from the following Processing example:
-// http://processing.org/learning/topics/follow3.html
+var inuUrl = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/072ac.svg"
+var sanUrl = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/04e09.svg"
 
-// The amount of points in the path:
-var points = 25;
+var kanjiA, kanjiB;
+var strokesA = []
+var aLoaded = false;
 
-// The distance between the points:
-var length = 35;
+paper.project.importSVG(inuUrl, function (kanji) {
+  kanji.position = new paper.Point(view.center)
+  kanji.scale(4)
+  kanji.children[2].visible = false // disable stroke numbers
 
-var path = new Path({
-  strokeColor: '#E4141B',
-  strokeWidth: 20,
-  strokeCap: 'round'
+  // kanji.fullySelected = true
+
+  
+  // quick and dirty global access
+  kanjiA = kanji
+  getAllChildPaths(kanji, strokesA)
+  aLoaded = true
 });
 
-var start = view.center / [10, 1];
-for (var i = 0; i < points; i++)
-  path.add(start + new Point(i * length, 0));
+function getAllChildPaths(item, pathList) {
+  if (item instanceof Path) {
+    pathList.push(item)
+  } else if (item instanceof Group) {
+    item.children.forEach(function (item) { getAllChildPaths(item, pathList) });
+  }
+}
+
+function onFrame(event) {
+  if (aLoaded && event.count > 30) {
+    // debugger;
+  }
+}
 
 function onMouseMove(event) {
-  path.firstSegment.point = event.point;
-  for (var i = 0; i < points - 1; i++) {
-    var segment = path.segments[i];
-    var nextSegment = segment.next;
-    var vector = segment.point - nextSegment.point;
-    vector.length = length;
-    nextSegment.point = segment.point - vector;
-  }
-  path.smooth({ type: 'continuous' });
+  strokesA[0].segments[0].point = event.point;
 }
-
-function onMouseDown(event) {
-  path.fullySelected = true;
-  path.strokeColor = '#e08285';
-}
-
-function onMouseUp(event) {
-  path.fullySelected = false;
-  path.strokeColor = '#e4141b';
-}
-
-var url = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/072ac.svg"
-
-paper.project.importSVG(url, function (item) {
-  item.scale(4)
-  item.fullySelected = true
-  item.position = new paper.Point(view.center)
-})

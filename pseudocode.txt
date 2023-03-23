@@ -1,0 +1,34 @@
+Notes:
+this should probably be done in JS somehow so I can throw it around the web.
+
+we need a margin around the central kanji for them all to swoop to,
+forming a wagon circle, then swooping in to their new strokes
+from back to front.
+
+let SA = len(kanjiA)
+find SA equidistant points on circle
+
+for stroke in kanjiA:
+  find stroke end
+  form worm from stroke with head at stroke end
+  set worm to seek its equidistant point
+  give initial burst of speed?
+
+
+update:
+  if wagonWheelFormed: // how to quantify this?
+    for worm in worms:
+      setWormTargets(targetStrokePoints)
+
+  rotate equidistant circle
+  seek worms to targets
+
+
+wormUpdate():
+  numTargets = len(targets)
+  if numTargets == 0:
+    return
+  elif numTargets == 1:
+    ease towards final target
+  else:
+    full speed towards next target

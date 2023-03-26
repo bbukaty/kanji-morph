@@ -17289,7 +17289,8 @@ Base.exports.PaperScript = function() {
 			walkAST(parse(code, {
 				ranges: true,
 				preserveParens: true,
-				sourceType: 'module'
+				sourceType: 'module',
+				ecmaVersion: 11
 			}), null, paperFeatures);
 		}
 		if (map) {

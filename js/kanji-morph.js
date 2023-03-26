@@ -1,24 +1,34 @@
-var inuUrl = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/072ac.svg"
+var INU_URL = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/072ac.svg"
 var sanUrl = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/04e09.svg"
 
 var kanjiA, kanjiB;
-var strokesA = []
-var aLoaded = false;
 
-paper.project.importSVG(inuUrl, function (kanji) {
-  kanji.position = new paper.Point(view.center)
-  kanji.scale(4)
-  kanji.children[2].visible = false // disable stroke numbers
+class KanjiMorph {
+  constructor(initialKanji) {
+    // init to placeholder
+    this.item = new Path.Circle(new Point(view.center), view.size.width / 10)
+    this.item.strokeColor = 'black'
+    this.strokes = []
+    this.loaded = false
+    
+    // TODO: convert unicode kanji to accessed svg
+    var kanjiSvgUrl = INU_URL // temp hardcoded to inu
+    
+    paper.project.importSVG(kanjiSvgUrl, (kanjiSvg) => {
+      kanjiSvg.position = new paper.Point(view.center)
+      kanjiSvg.scale(4)
+      kanjiSvg.children[2].visible = false // disable stroke numbers
+      getAllChildPaths(kanjiSvg, this.strokes)
+      this.item.remove()
+      this.item = kanjiSvg
+      this.loaded = true
+    })
+  }
+}
 
-  // kanji.fullySelected = true
+var kanjiA = new KanjiMorph("犬")
 
-  
-  // quick and dirty global access
-  kanjiA = kanji
-  getAllChildPaths(kanji, strokesA)
-  aLoaded = true
-});
-
+// recursively find all path objects in item children, add them to pathList
 function getAllChildPaths(item, pathList) {
   if (item instanceof Path) {
     pathList.push(item)
@@ -28,11 +38,19 @@ function getAllChildPaths(item, pathList) {
 }
 
 function onFrame(event) {
-  if (aLoaded && event.count > 30) {
+  if (kanjiA.loaded && event.count > 30) {
     // debugger;
   }
 }
 
 function onMouseMove(event) {
-  strokesA[0].segments[0].point = event.point;
+  if (kanjiA.loaded) {
+    kanjiA.strokes[0].segments[0].point = event.point;
+  }
+}
+
+function onKeyDown(event) {
+  if (event.key == 'space') {
+    kanjiA.item.scale(1.1)
+  }
 }

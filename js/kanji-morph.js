@@ -3,15 +3,15 @@ const sanUrl = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/0
 
 class KanjiMorph {
   constructor(initialKanji) {
-    // init to placeholder
+    this.char = initialKanji
+    this.morphingTo = null
+    // init visual placeholder
     this.item = new Path.Circle(new Point(view.center), view.size.width / 10)
     this.item.strokeColor = 'black'
     this.strokes = []
     this.loaded = false
 
-    // TODO: get svg from unicode kanji character somehow
-    let kanjiSvgUrl = INU_URL
-
+    let kanjiSvgUrl = this.getSvgFromUnicode(initialKanji)
     paper.project.importSVG(kanjiSvgUrl, {
       insert: false,
       onLoad: (kanjiSvg) => {
@@ -48,6 +48,11 @@ class KanjiMorph {
     periphery.rotate(30)
     periphery.strokeColor = 'green';
     periphery.closed = false
+  }
+
+  // TODO
+  getSvgFromUnicode(char) {
+    return INU_URL;
   }
 }
 

@@ -1,78 +1,97 @@
-const INU_URL = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/072ac.svg"
-const sanUrl = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/04e09.svg"
+const INU_URL = "../data/inu.svg"
 
 class KanjiMorph {
-  constructor(initialKanji) {
-    this.char = initialKanji
+  constructor(initialChar) {
+    // state
+    this.char = initialChar
+    this.loaded = false
+    this.strokes = []
+    this.periphery = null
     this.morphingTo = null
-    // init visual placeholder
+    this.tStart = 0
+    this.interval = 3
+
+    // visual placeholder
     this.item = new Path.Circle(new Point(view.center), view.size.width / 10)
     this.item.strokeColor = 'black'
-    this.strokes = []
-    this.loaded = false
 
-    let kanjiSvgUrl = this.getSvgFromUnicode(initialKanji)
+    let kanjiSvgUrl = this.getSvgFromUnicode(initialChar)
     paper.project.importSVG(kanjiSvgUrl, {
       insert: false,
       onLoad: (kanjiSvg) => {
         let kanji = kanjiSvg.children[1]
-        kanji.position = new paper.Point(view.center)
-        kanji.scale(4)
-        // kanji.fullySelected = true;
-
-        // populate KanjiMorph helper state
-        this.collectPaths(kanji)
-
         this.item.remove() // remove placeholder
         this.item = kanji
         paper.project.activeLayer.addChild(kanji);
         this.loaded = true
+        this.initialize()
       }
     })
-  }
-  
-  // recursively find path objects, add them to strokes
-  collectPaths(item) {
-    if (item instanceof Path) {
-      this.strokes.push(item)
-    } else if (item instanceof Group) {
-      item.children.forEach((child) => this.collectPaths(child));
-    }
-  }
-
-  addPathToMargin() {
-    let center = this.item.position;
-    let sides = this.strokes.length;
-    let radius = this.item.bounds.size.width;
-    let periphery = new Path.RegularPolygon(center, sides, radius);
-    periphery.rotate(30)
-    periphery.strokeColor = 'green';
-    periphery.closed = false
   }
 
   // TODO
   getSvgFromUnicode(char) {
-    return INU_URL;
+    if (char == '犬') return INU_URL;
+    else return SAN_URL;
+  }
+
+  initialize() {
+    this.item.position = new paper.Point(view.center)
+    this.item.scale(4)
+    this.item.fullySelected = true;
+
+    this.findStrokes(this.item)
+    this.createPeriphery()
+  }
+
+  // recursively find path objects, add them to strokes
+  findStrokes(item) {
+    if (item instanceof Path) {
+      this.strokes.push(item)
+    } else if (item instanceof Group) {
+      item.children.forEach((child) => this.findStrokes(child));
+    }
+  }
+
+  createPeriphery() {
+    let center = this.item.position
+    let sides = this.strokes.length
+    let radius = this.item.bounds.size.width
+    let periphery = new Path.RegularPolygon(center, sides, radius)
+    periphery.strokeColor = 'green'
+    periphery.closed = false
+    periphery.visible = false
+    this.periphery = periphery
+  }
+
+  startMorph(targetChar, time) {
+    // TODO get info from targetChar, store in state
+    this.morphingTo = targetChar
+    this.tStart = time
+  }
+
+  step(frameEvent) {
+    if (!this.loaded) return;
+    if (this.morphingTo) {
+      if (!this.tStart) this.tStart = frameEvent.time;
+      let factor = Math.min(1, (frameEvent.time - this.tStart) / this.interval)
+      this.strokes[0].interpolate(this.strokes[0], this.periphery, factor)
+    }
   }
 }
 
-createGrid();
-let kanjiMorph = new KanjiMorph("犬");
+// createGrid();
+let kanjiMorph = new KanjiMorph('犬');
 
 function onFrame(event) {
-  if (kanjiMorph.loaded && event.count > 30) {
-    // debugger;
-    // kanjiMorph.addPathToMargin();
-  }
+  kanjiMorph.step(event);
 }
 
 // function onMouseMove(event) {}
 
 function onKeyDown(event) {
   if (event.key == 'space') {
-    // kanjiMorph.item.scale(1.1)
-    // kanjiMorph.strokes[0].smooth()
-    kanjiMorph.addPathToMargin()
+    kanjiMorph.startMorph('三')
   }
 
   if (event.key == 'p') {
@@ -86,7 +105,7 @@ function createGrid() {
     myPath.strokeColor = 'black';
     myPath.add(new Point(0, y), new Point(view.size.width, y));
   }
-  
+
   for (let x = 0; x < view.size.width; x += 100) {
     let myPath = new Path();
     myPath.strokeColor = 'black';

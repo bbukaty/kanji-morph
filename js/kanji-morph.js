@@ -1,7 +1,5 @@
-var INU_URL = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/072ac.svg"
-var sanUrl = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/04e09.svg"
-
-var kanjiA, kanjiB;
+const INU_URL = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/072ac.svg"
+const sanUrl = "https://raw.githubusercontent.com/KanjiVG/kanjivg/master/kanji/04e09.svg"
 
 class KanjiMorph {
   constructor(initialKanji) {
@@ -10,47 +8,83 @@ class KanjiMorph {
     this.item.strokeColor = 'black'
     this.strokes = []
     this.loaded = false
-    
-    // TODO: convert unicode kanji to accessed svg
-    var kanjiSvgUrl = INU_URL // temp hardcoded to inu
-    
-    paper.project.importSVG(kanjiSvgUrl, (kanjiSvg) => {
-      kanjiSvg.position = new paper.Point(view.center)
-      kanjiSvg.scale(4)
-      kanjiSvg.children[2].visible = false // disable stroke numbers
-      getAllChildPaths(kanjiSvg, this.strokes)
-      this.item.remove()
-      this.item = kanjiSvg
-      this.loaded = true
+
+    // TODO: get svg from unicode kanji character somehow
+    let kanjiSvgUrl = INU_URL
+
+    paper.project.importSVG(kanjiSvgUrl, {
+      insert: false,
+      onLoad: (kanjiSvg) => {
+        let kanji = kanjiSvg.children[1]
+        kanji.position = new paper.Point(view.center)
+        kanji.scale(4)
+        // kanji.fullySelected = true;
+
+        // populate KanjiMorph helper state
+        this.collectPaths(kanji)
+
+        this.item.remove() // remove placeholder
+        this.item = kanji
+        paper.project.activeLayer.addChild(kanji);
+        this.loaded = true
+      }
     })
   }
-}
+  
+  // recursively find path objects, add them to strokes
+  collectPaths(item) {
+    if (item instanceof Path) {
+      this.strokes.push(item)
+    } else if (item instanceof Group) {
+      item.children.forEach((child) => this.collectPaths(child));
+    }
+  }
 
-var kanjiA = new KanjiMorph("犬")
-
-// recursively find all path objects in item children, add them to pathList
-function getAllChildPaths(item, pathList) {
-  if (item instanceof Path) {
-    pathList.push(item)
-  } else if (item instanceof Group) {
-    item.children.forEach(function (item) { getAllChildPaths(item, pathList) });
+  addPathToMargin() {
+    let center = this.item.position;
+    let sides = this.strokes.length;
+    let radius = this.item.bounds.size.width;
+    let periphery = new Path.RegularPolygon(center, sides, radius);
+    periphery.rotate(30)
+    periphery.strokeColor = 'green';
+    periphery.closed = false
   }
 }
+
+createGrid();
+let kanjiMorph = new KanjiMorph("犬");
 
 function onFrame(event) {
-  if (kanjiA.loaded && event.count > 30) {
+  if (kanjiMorph.loaded && event.count > 30) {
     // debugger;
+    // kanjiMorph.addPathToMargin();
   }
 }
 
-function onMouseMove(event) {
-  if (kanjiA.loaded) {
-    kanjiA.strokes[0].segments[0].point = event.point;
-  }
-}
+// function onMouseMove(event) {}
 
 function onKeyDown(event) {
   if (event.key == 'space') {
-    kanjiA.item.scale(1.1)
+    // kanjiMorph.item.scale(1.1)
+    // kanjiMorph.strokes[0].smooth()
+    kanjiMorph.addPathToMargin()
+  }
+
+  if (event.key == 'p') {
+    debugger;
+  }
+}
+
+function createGrid() {
+  for (let y = 0; y < view.size.height; y += 100) {
+    let myPath = new Path();
+    myPath.strokeColor = 'black';
+    myPath.add(new Point(0, y), new Point(view.size.width, y));
+  }
+  
+  for (let x = 0; x < view.size.width; x += 100) {
+    let myPath = new Path();
+    myPath.strokeColor = 'black';
+    myPath.add(new Point(x, 0), new Point(x, view.size.height));
   }
 }

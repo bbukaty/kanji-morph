@@ -1,4 +1,3 @@
-const INU_URL = "../data/inu.svg"
 
 class KanjiMorph {
   constructor(initialChar) {
@@ -29,16 +28,15 @@ class KanjiMorph {
     })
   }
 
-  // TODO
   getSvgFromUnicode(char) {
-    if (char == '犬') return INU_URL;
-    else return SAN_URL;
+    return "../data/kanji/" + char.charCodeAt(0).toString(16).padStart(5, '0') + '.svg'
   }
 
   initialize() {
     this.item.position = new paper.Point(view.center)
     this.item.scale(4)
-    this.item.fullySelected = true;
+    this.item.selected = true
+    // this.item.fullySelected = true;
 
     this.findStrokes(this.item)
     this.createPeriphery()
@@ -81,7 +79,7 @@ class KanjiMorph {
 }
 
 // createGrid();
-let kanjiMorph = new KanjiMorph('犬');
+let kanjiMorph = new KanjiMorph('大');
 
 function onFrame(event) {
   kanjiMorph.step(event);

@@ -1,0 +1,10 @@
+  createPeriphery() {
+    let center = this.item.position
+    let sides = this.strokes.length
+    let radius = this.item.bounds.size.width
+    let periphery = new Path.RegularPolygon(center, sides, radius)
+    periphery.strokeColor = 'green'
+    periphery.closed = false
+    periphery.visible = false
+    this.periphery = periphery
+  }

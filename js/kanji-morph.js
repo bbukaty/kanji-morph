@@ -14,7 +14,7 @@ class KanjiMorph {
     })
 
     this.tStarted = 0
-    this.interval = 5
+    this.interval = 1
   }
 
   startMorph(targetChar) {
@@ -32,16 +32,18 @@ class KanjiMorph {
 
   prepareStrokesForMorph() {
     // quick and dirty stroke number equalization
-    while (this.currentKanji.strokes.length - this.targetKanji.strokes.length > 0) {
-      this.currentKanji.strokes.pop().remove()
+    let curr = this.currentKanji.backup
+    let target = this.targetKanji
+    while (curr.strokes.length - target.strokes.length > 0) {
+      curr.strokes.pop().remove()
     }
-    while (this.currentKanji.strokes.length - this.targetKanji.strokes.length < 0) {
-      this.currentKanji.strokes.push(this.currentKanji.strokes[0].clone())
+    while (curr.strokes.length - target.strokes.length < 0) {
+      curr.strokes.push(curr.strokes[0].clone())
     }
 
-    for (let i = 0; i < this.currentKanji.strokes.length; i++) {
-      let currStroke = this.currentKanji.strokes[i]
-      let targetStroke = this.targetKanji.strokes[i]
+    for (let i = 0; i < curr.strokes.length; i++) {
+      let currStroke = curr.strokes[i]
+      let targetStroke = target.strokes[i]
       let strokeDiff = targetStroke.segments.length - currStroke.segments.length;
       if (strokeDiff > 0) {
         for (let i = 0; i < strokeDiff; i++) {
@@ -56,6 +58,10 @@ class KanjiMorph {
       }
       // else equal, no modification necessary
     }
+    
+    this.currentKanji.item.remove()
+    this.currentKanji.restoreFromBackup()
+    paper.project.activeLayer.addChild(this.currentKanji.item)
   }
 
   step(frameEvent) {
@@ -64,22 +70,26 @@ class KanjiMorph {
     if (!this.tStarted) {
       this.tStarted = t
     } else if (t - this.tStarted > this.interval) {
-      // morph is done, clean up and prepare for next morph
-      this.targetKanji.restoreFromOriginal() // clean up the extra segments we added for interpolation
       this.currentKanji.item.remove()
+      this.targetKanji.restoreFromBackup() // clean up the extra segments we added for interpolation
       this.currentKanji = this.targetKanji
       paper.project.activeLayer.addChild(this.currentKanji.item)
       this.tStarted = null
-      return
-    }
-    // morph in progress
-    let factor = (t - this.tStarted) / this.interval
-    for (let i = 0; i < this.currentKanji.strokes.length; i++) {
-      this.currentKanji.strokes[i].interpolate(
-        this.currentKanji.strokes[i],
-        this.targetKanji.strokes[i],
-        factor
-      );
+      console.log("done")
+    } else {
+      // morph in progress
+      let tPassed = (t - this.tStarted)
+      // sine based easing, goes from 0 to 1 over interval
+      let factor = (Math.sin((Math.PI/this.interval) * tPassed + (Math.PI * 1.5)) + 1) / 2
+
+      // console.log(factor)
+      for (let i = 0; i < this.currentKanji.strokes.length; i++) {
+        this.currentKanji.strokes[i].interpolate(
+          this.currentKanji.backup.strokes[i],
+          this.targetKanji.strokes[i],
+          factor
+        );
+      }
     }
   }
 }

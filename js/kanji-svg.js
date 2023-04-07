@@ -6,7 +6,7 @@ const KanjiSvg = class KanjiSvg {
     this.char = character
     this.item = null
     this.strokes = []
-    this.original = {
+    this.backup = {
       item: null,
       strokes: []
     }
@@ -15,10 +15,10 @@ const KanjiSvg = class KanjiSvg {
     paper.project.importSVG(kanjiSvgUrl, {
       insert: false,
       onLoad: (kanjiSvg) => {
-        this.original.item = kanjiSvg.children[1]
-        this.initializeItem(this.original.item)
-        this.original.strokes = this.collectStrokes(this.original.item, [])
-        this.restoreFromOriginal()
+        this.backup.item = kanjiSvg.children[1]
+        this.initializeItem(this.backup.item)
+        this.backup.strokes = this.collectStrokes(this.backup.item, [])
+        this.restoreFromBackup()
         onKanjiLoaded(this)
       }
     })
@@ -32,18 +32,18 @@ const KanjiSvg = class KanjiSvg {
   // scaling, positioning, etc. that we want to perform on all kanji svgs on load.
   initializeItem(item) {
     item.position = new paper.Point(view.center)
-    item.scale(4)
+    item.scale(3)
     // item.strokeWidth = 3
     // item.selected = true
     // item.fullySelected = true;
   }
 
-  restoreFromOriginal() {
-    this.item = this.original.item.clone()
+  restoreFromBackup() {
+    this.item = this.backup.item.clone()
     this.strokes = this.collectStrokes(this.item, [])
   }
 
-  // recursively find all path objects, add them to the provided strokeList
+  // given strokes (Path objects) found so far, recurse on item and find more, returning all.
   collectStrokes(item, collectedStrokes) {
     let newStrokes = []
     if (item instanceof Path) {

@@ -8,13 +8,13 @@ class KanjiMorph {
     this.currentKanji = null
     this.targetKanji = null
     new KanjiSvg(initialChar, (loadedKanjiSvg) => {
-      paper.project.activeLayer.addChild(loadedKanjiSvg.live.item)
+      paper.project.activeLayer.addChild(loadedKanjiSvg.item)
       this.currentKanji = loadedKanjiSvg
       this.targetKanji = loadedKanjiSvg
     })
 
     this.tStarted = 0
-    this.interval = 10
+    this.interval = 5
   }
 
   startMorph(targetChar) {
@@ -24,23 +24,24 @@ class KanjiMorph {
     }
     new KanjiSvg(targetChar, (loadedKanjiSvg) => {
       this.targetKanji = loadedKanjiSvg
-      // paper.project.activeLayer.addChild(this.targetKanji.live.item)
+      // paper.project.activeLayer.addChild(this.targetKanji.item)
       this.prepareStrokesForMorph()
+      this.tStarted = null
     })
   }
 
   prepareStrokesForMorph() {
     // quick and dirty stroke number equalization
-    while (this.currentKanji.live.strokes.length - this.targetKanji.live.strokes.length > 0) {
-      this.currentKanji.live.strokes.pop().remove()
+    while (this.currentKanji.strokes.length - this.targetKanji.strokes.length > 0) {
+      this.currentKanji.strokes.pop().remove()
     }
-    while (this.currentKanji.live.strokes.length - this.targetKanji.live.strokes.length < 0) {
-      this.currentKanji.live.strokes.push(this.currentKanji.live.strokes[0].clone())
+    while (this.currentKanji.strokes.length - this.targetKanji.strokes.length < 0) {
+      this.currentKanji.strokes.push(this.currentKanji.strokes[0].clone())
     }
 
-    for (let i = 0; i < this.currentKanji.live.strokes.length; i++) {
-      let currStroke = this.currentKanji.live.strokes[i]
-      let targetStroke = this.targetKanji.live.strokes[i]
+    for (let i = 0; i < this.currentKanji.strokes.length; i++) {
+      let currStroke = this.currentKanji.strokes[i]
+      let targetStroke = this.targetKanji.strokes[i]
       let strokeDiff = targetStroke.segments.length - currStroke.segments.length;
       if (strokeDiff > 0) {
         for (let i = 0; i < strokeDiff; i++) {
@@ -62,20 +63,23 @@ class KanjiMorph {
     let t = frameEvent.time
     if (!this.tStarted) {
       this.tStarted = t
-
     } else if (t - this.tStarted > this.interval) {
-      // completed; set currentKanji to clean version of target and clean up for next morph.
+      // morph is done, clean up and prepare for next morph
+      this.targetKanji.restoreFromOriginal() // clean up the extra segments we added for interpolation
+      this.currentKanji.item.remove()
+      this.currentKanji = this.targetKanji
+      paper.project.activeLayer.addChild(this.currentKanji.item)
       this.tStarted = null
       return
     }
     // morph in progress
     let factor = (t - this.tStarted) / this.interval
-    for (let i = 0; i < this.currentKanji.live.strokes.length; i++) {
-      this.currentKanji.live.strokes[i].interpolate(
-        this.currentKanji.live.strokes[i],
-        this.targetKanji.live.strokes[i],
+    for (let i = 0; i < this.currentKanji.strokes.length; i++) {
+      this.currentKanji.strokes[i].interpolate(
+        this.currentKanji.strokes[i],
+        this.targetKanji.strokes[i],
         factor
-      )
+      );
     }
   }
 }

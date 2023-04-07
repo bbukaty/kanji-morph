@@ -4,11 +4,9 @@
 const KanjiSvg = class KanjiSvg {
   constructor(character, onKanjiLoaded) {
     this.char = character
+    this.item = null
+    this.strokes = []
     this.original = {
-      item: null,
-      strokes: []
-    }
-    this.live = {
       item: null,
       strokes: []
     }
@@ -19,9 +17,8 @@ const KanjiSvg = class KanjiSvg {
       onLoad: (kanjiSvg) => {
         this.original.item = kanjiSvg.children[1]
         this.initializeItem(this.original.item)
-        this.live.item = this.original.item.clone()
-        this.findStrokes(this.original.item, this.original.strokes)
-        this.findStrokes(this.live.item, this.live.strokes)
+        this.original.strokes = this.collectStrokes(this.original.item, [])
+        this.restoreFromOriginal()
         onKanjiLoaded(this)
       }
     })
@@ -41,15 +38,24 @@ const KanjiSvg = class KanjiSvg {
     // item.fullySelected = true;
   }
 
+  restoreFromOriginal() {
+    this.item = this.original.item.clone()
+    this.strokes = this.collectStrokes(this.item, [])
+  }
+
   // recursively find all path objects, add them to the provided strokeList
-  findStrokes(item, strokeList) {
+  collectStrokes(item, collectedStrokes) {
+    let newStrokes = []
     if (item instanceof Path) {
       item.strokeColor = '#000000';
       item.strokeWidth = 10;
-      strokeList.push(item)
+      newStrokes.push(item)
     } else if (item instanceof Group) {
-      item.children.forEach((child) => this.findStrokes(child, strokeList));
+      item.children.forEach((child) => {
+        newStrokes = newStrokes.concat(this.collectStrokes(child, []))
+      });
     }
+    return collectedStrokes.concat(newStrokes);
   }
 }
 

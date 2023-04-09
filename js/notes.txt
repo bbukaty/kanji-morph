@@ -1,0 +1,14 @@
+math for curved line with no "kinks": what we want is minimum *radius of curvature*
+
+丿一
+
+kanjiMorph.currentKanji.item.children[0].children[0].join(kanjiMorph.targetKanji.item.children[0].children[0])
+
+
+二 -> 大
+
+path options:
+1. don't go to edge of circle
+2. find midpoint at edge of circle
+  - might be worth returning to path.smooth for this approach
+3. extend stroke tips so stroke "flows into place" more cleanly

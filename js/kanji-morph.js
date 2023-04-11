@@ -5,23 +5,38 @@ const supportedKanji = "123456789!,.:;?ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmno
 
 class KanjiMorph {
   static get HandleMin() { return 80; }
-  constructor(initialChar, targetChar) {
-    this.currentKanji = null
+
+  constructor(initialChar) {
+    this.currentKanji = null;
     this.targetKanji = null;
     new KanjiSvg(initialChar, (loadedKanjiSvg) => {
       paper.project.activeLayer.addChild(loadedKanjiSvg.item)
-      this.currentKanji = loadedKanjiSvg
-      // hacky way to wait until both are loaded. just nest.
-      new KanjiSvg(targetChar, (a) => {
-        paper.project.activeLayer.addChild(a.item)
-        this.targetKanji = a
-        this.joinKanji()
-      })
+      this.currentKanji = loadedKanjiSvg;
+      this.targetKanji = this.currentKanji;
+      for (const stroke of this.currentKanji.strokes) {
+        let myCircle = new Path.Circle({
+          center: stroke.segments[0].point,
+          radius: 10,
+          fillColor: 'green'
+        });
+        this.indicators.push(myCircle);
+      }
     })
-
+    
+    this.tStarted = null
+    this.interval = 1
+    this.indicators = []
   }
 
-  joinKanji() {
+  morphTo(targetChar) {
+    new KanjiSvg(targetChar, (targetKanji) => {
+      paper.project.activeLayer.addChild(targetKanji.item)
+      this.targetKanji = targetKanji
+      this.prepareMorph()
+    })
+  }
+
+  prepareMorph() {
     // ignore different stroke counts for now
     for (let i = 0; i < this.currentKanji.strokes.length; i++) {
       let stroke = this.currentKanji.strokes[i];
@@ -37,32 +52,62 @@ class KanjiMorph {
       let nextStrokeStart = stroke.segments[firstStrokeLen]
       nextStrokeStart.handleIn = nextStrokeStart.handleOut * -1
       nextStrokeStart.handleIn.length = Math.max(nextStrokeStart.handleIn.length, KanjiMorph.HandleMin)
-
     }
     kanjiMorph.currentKanji.item.fullySelected = true
   }
 
-  step(event) {}
+  morph(progress) {
+    // sine based easing, goes from 0 to 1 over interval
+    let factor = (Math.sin(Math.PI * progress + (Math.PI * 1.5)) + 1) / 2
+    for (let i = 0; i < this.currentKanji.strokes.length; i++) {
+      let stroke = this.currentKanji.strokes[i];
+      let indicator = this.indicators[i];
+      indicator.position = stroke.getLocationAt(stroke.length * factor).point
+
+    }
+  }
+
+  finalizeMorph() {
+    this.targetKanji.restoreFromBackup() // clean up the extra segments we added for interpolation
+    this.currentKanji.item.remove()
+    this.currentKanji = this.targetKanji
+    paper.project.activeLayer.addChild(this.currentKanji.item)
+    console.log("done")
+  }
+
+  step(frameEvent) {
+    if (this.targetKanji == this.currentKanji) return;
+    let t = frameEvent.time
+    if (!this.tStarted) {
+      this.tStarted = t
+    } else if (t - this.tStarted > this.interval) {
+      this.finalizeMorph()
+      this.tStarted = null
+    } else {
+      let progress = (t - this.tStarted) / this.interval;
+      this.morph(progress)
+    }
+  }
 }
 
 // createGrid();
-// let kanjiMorph = new KanjiMorph('丿', '一');
-let kanjiMorph = new KanjiMorph('二', '人');
+let kanjiMorph = new KanjiMorph('丿');
+// let kanjiMorph = new KanjiMorph('二');
 
 function onFrame(event) {
   kanjiMorph.step(event)
 }
 
 function onMouseMove(event) {
-
-  let path = kanjiMorph.currentKanji.item.children[0].children[0]
+  // let path = kanjiMorph.currentKanji.item.children[0].children[0]
   // path.segments[2].handleOut = event.point - path.segments[2].point
   // path.segments[3].handleIn = event.point - path.segments[3].point
-
 }
 
 function onKeyDown(event) {
   if (event.key == 'space') {
+    kanjiMorph.morphTo('一');
+    // kanjiMorph.morphTo('人');
   }
 
   if (event.key == 'p') {

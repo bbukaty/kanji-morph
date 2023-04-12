@@ -12,3 +12,16 @@ path options:
 2. find midpoint at edge of circle
   - might be worth returning to path.smooth for this approach
 3. extend stroke tips so stroke "flows into place" more cleanly
+
+
+
+  createIndicators() {
+    for (const stroke of this.currentKanji.strokes) {
+      let myCircle = new Path.Circle({
+        center: stroke.segments[0].point,
+        radius: 10,
+        fillColor: 'green'
+      });
+      this.indicators.push(myCircle);
+    }
+  }

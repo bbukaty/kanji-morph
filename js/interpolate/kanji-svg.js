@@ -1,17 +1,24 @@
 // stores a unicode character + a paper.js Item of that kanji loaded from SVG.
+// actually stores two copies of the Item so that we always have a ground truth
+// that we can reference, i.e. for interpolation.
 const KanjiSvg = class KanjiSvg {
   constructor(character, onKanjiLoaded) {
     this.char = character
     this.item = null
     this.strokes = []
+    this.backup = {
+      item: null,
+      strokes: []
+    }
 
     let kanjiSvgUrl = this.getSvgFromUnicode(character)
     paper.project.importSVG(kanjiSvgUrl, {
       insert: false,
       onLoad: (kanjiSvg) => {
-        this.item = kanjiSvg.children[1]
-        this.initializeItem(this.item)
-        this.strokes = this.collectStrokes(this.item, [])
+        this.backup.item = kanjiSvg.children[1]
+        this.initializeItem(this.backup.item)
+        this.backup.strokes = this.collectStrokes(this.backup.item, [])
+        this.restoreFromBackup()
         onKanjiLoaded(this)
       }
     })
@@ -30,6 +37,11 @@ const KanjiSvg = class KanjiSvg {
     // item.strokeWidth = 3
     // item.selected = true
     // item.fullySelected = true;
+  }
+
+  restoreFromBackup() {
+    this.item = this.backup.item.clone()
+    this.strokes = this.collectStrokes(this.item, [])
   }
 
   // given strokes (Path objects) found so far, recurse on item and find more, returning all.

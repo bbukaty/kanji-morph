@@ -1,4 +1,5 @@
 // stores a unicode character + a paper.js Item of that kanji loaded from SVG.
+window.kanjiSelected = false;
 const KanjiSvg = class KanjiSvg {
   constructor(character, onKanjiLoaded) {
     this.char = character
@@ -19,7 +20,7 @@ const KanjiSvg = class KanjiSvg {
 
   // look in /data/kanji for the kanjivg svg file corresponding with a unicode kanji char
   getSvgFromUnicode(char) {
-    return "../data/kanji/" + char.charCodeAt(0).toString(16).padStart(5, '0') + '.svg'
+    return "./kanji/" + char.charCodeAt(0).toString(16).padStart(5, '0') + '.svg'
   }
 
   // scaling, positioning, etc. that we want to perform on all kanji svgs on load.
@@ -28,7 +29,7 @@ const KanjiSvg = class KanjiSvg {
     item.position = new paper.Point(view.center)
     item.scale(3)
     // item.strokeWidth = 3
-    // item.selected = true
+    item.selected = window.kanjiSelected;
     // item.fullySelected = true;
   }
 

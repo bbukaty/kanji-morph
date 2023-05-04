@@ -11,12 +11,16 @@ Big shoutout to the Javascript vector graphics scripting tool [Paper.JS](http://
 
 ## Setup
 
-You'll need to download a KanjiVG release and unzip it into the top level of the repo.  
-Here's the one I used during development: [link](https://github.com/KanjiVG/kanjivg/releases/download/r20230110/kanjivg-20230110-all.zip).
+You'll need to download the KanjiVG data.  
+`setup.js` is a node script that should do this for you if you have node installed. This command installs the necessary npm libraries and runs it.
+```
+npm install fs request unzipper && node setup.js
+```
+Otherwise you can manually download KanjiVG from their [releases page](https://github.com/KanjiVG/kanjivg/releases) and unzip it into the top level of the repo (`/kanji`). Here's the release I used during development: [link](https://github.com/KanjiVG/kanjivg/releases/download/r20230110/kanjivg-20230110-all.zip).
 
 ## Running
 Just opening index.html won't work because of CORS, so to run the project you'll need to serve `index.html` locally somehow.
-I recommend:
+I used:
 ```
 python3 -m http.server
 ```
